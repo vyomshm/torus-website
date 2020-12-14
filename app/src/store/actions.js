@@ -321,7 +321,7 @@ export default {
       const loginParameters = await loginHandler.handleLoginWindow()
       const { accessToken, idToken } = loginParameters
       const userInfo = await loginHandler.getUserInfo(loginParameters)
-      const { profileImage, name, email, verifierId, typeOfLogin: returnTypeOfLogin } = userInfo
+      const { profileImage, name, email, verifierId, typeOfLogin: returnTypeOfLogin, extraParams } = userInfo
       commit('setUserInfo', {
         profileImage,
         name,
@@ -331,7 +331,7 @@ export default {
         verifierParams: { verifier_id: verifierId },
         typeOfLogin: returnTypeOfLogin,
       })
-      await dispatch('handleLogin', { calledFromEmbed, oAuthToken: idToken || accessToken })
+      await dispatch('handleLogin', { calledFromEmbed, oAuthToken: idToken || accessToken, extraParams })
     } catch (error) {
       log.error(error)
       oauthStream.write({ err: { message: error.message } })
@@ -381,12 +381,12 @@ export default {
       })
     )
   },
-  async handleLogin({ state, dispatch, commit }, { calledFromEmbed, oAuthToken }) {
+  async handleLogin({ state, dispatch, commit }, { calledFromEmbed, oAuthToken, extraParams = {} }) {
     // The error in this is caught above
     const {
       userInfo: { verifierId, verifier, verifierParams },
     } = state
-    const oAuthKey = await dispatch('getTorusKey', { verifier, verifierId, verifierParams, oAuthToken })
+    const oAuthKey = await dispatch('getTorusKey', { verifier, verifierId, verifierParams, oAuthToken, extraParams })
     log.info('key 1', oAuthKey)
     dispatch('subscribeToControllers')
     const defaultAddresses = await dispatch('initTorusKeyring', {
@@ -431,12 +431,12 @@ export default {
     torus.updateStaticData({ isUnlocked: true })
     dispatch('cleanupOAuth', { oAuthToken })
   },
-  async getTorusKey(_, { verifier, verifierId, verifierParams, oAuthToken }) {
+  async getTorusKey(_, { verifier, verifierId, verifierParams, oAuthToken, extraParams }) {
     if (!verifier) throw new Error('Verifier is required')
     const { torusNodeEndpoints, torusNodePub, torusIndexes } = await torus.nodeDetailManager.getNodeDetails()
     const publicAddress = await torus.getPublicAddress(torusNodeEndpoints, torusNodePub, { verifier, verifierId })
     log.info('New private key assigned to user at address ', publicAddress)
-    const torusKey = await torus.retrieveShares(torusNodeEndpoints, torusIndexes, verifier, verifierParams, oAuthToken)
+    const torusKey = await torus.retrieveShares(torusNodeEndpoints, torusIndexes, verifier, verifierParams, oAuthToken, extraParams)
     if (publicAddress.toLowerCase() !== torusKey.ethAddress.toLowerCase()) throw new Error('Invalid Key')
     return torusKey
   },

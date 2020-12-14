@@ -36,7 +36,7 @@
     "@tkey/web-storage": "^3.2.2",
     "@toruslabs/fetch-node-details": "^2.3.2",
     "@toruslabs/http-helpers": "^1.3.5",
-    "@toruslabs/torus.js": "^2.2.9",
+    "@toruslabs/torus.js": "file:../../torus.js/toruslabs-torus.js-2.2.9.tgz",
     "@unstoppabledomains/resolution": "^1.8.3",
     "@walletconnect/core": "^1.3.1",
     "@walletconnect/iso-crypto": "^1.3.1",
