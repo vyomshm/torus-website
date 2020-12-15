@@ -37,6 +37,8 @@ import {
   TWITTER,
   TWITTER_LINKED_VERIFIER,
   TWITTER_VERIFIER,
+  WEBAUTHN,
+  WEBAUTHN_VERIFIER,
   WECHAT,
   WECHAT_LINKED_VERIFIER,
   WECHAT_VERIFIER,
@@ -315,6 +317,7 @@ export default {
         domain: LOGIN_DOMAIN,
         connection: 'Wechat',
       },
+
       // For torus only
       hasLightLogo: false,
       torusDescription: '',
@@ -360,6 +363,21 @@ export default {
       // For torus only
       hasLightLogo: true,
       torusDescription: 'login.signUpEmail',
+    },
+    [WEBAUTHN_VERIFIER]: {
+      description: '',
+      typeOfLogin: WEBAUTHN,
+      name: 'WebAuthn',
+      clientId: 'webauthn',
+      logoHover: '',
+      logoLight: '',
+      logoDark: '',
+      showOnModal: true,
+      showOnDesktop: true,
+      showOnMobile: true,
+      // For torus only
+      hasLightLogo: false,
+      torusDescription: '',
     },
     // [WEIBO_VERIFIER]: {
     //   description: '',

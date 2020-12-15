@@ -5,5 +5,6 @@ import HandlerFactory from './HandlerFactory'
 import JwtHandler from './JwtHandler'
 import RedditHandler from './RedditHandler'
 import TwitchHandler from './TwitchHandler'
+import WebAuthnHandler from './WebAuthnHandler'
 
-export { GoogleHandler, FacebookHandler, DiscordHandler, HandlerFactory, JwtHandler, RedditHandler, TwitchHandler }
+export { WebAuthnHandler, GoogleHandler, FacebookHandler, DiscordHandler, HandlerFactory, JwtHandler, RedditHandler, TwitchHandler }

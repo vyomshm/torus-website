@@ -13,6 +13,7 @@ import {
   REDDIT,
   TWITCH,
   TWITTER,
+  WEBAUTHN,
   WECHAT,
   WEIBO,
 } from '../../utils/enums'
@@ -23,6 +24,7 @@ import JwtHandler from './JwtHandler'
 import PasswordlessHandler from './PasswordlessHandler'
 import RedditHandler from './RedditHandler'
 import TwitchHandler from './TwitchHandler'
+import WebAuthnHandler from './WebAuthnHandler'
 
 const createHandler = ({ typeOfLogin, clientId, verifier, redirect_uri, preopenInstanceId, redirectToOpener = false, jwtParameters }) => {
   if (!verifier || !typeOfLogin || !clientId) {
@@ -43,6 +45,8 @@ const createHandler = ({ typeOfLogin, clientId, verifier, redirect_uri, preopenI
     case PASSWORDLESS:
       if (!domain || !login_hint) throw new Error('Invalid params')
       return new PasswordlessHandler({ clientId, verifier, redirect_uri, typeOfLogin, preopenInstanceId, redirectToOpener, jwtParameters })
+    case WEBAUTHN:
+      return new WebAuthnHandler({ clientId, verifier, redirect_uri, typeOfLogin, preopenInstanceId, redirectToOpener })
     case GITHUB:
     case APPLE:
     case KAKAO:

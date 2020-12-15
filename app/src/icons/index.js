@@ -256,6 +256,9 @@ export default {
   twitter: {
     component: VerifierTwitterIcon,
   },
+  webauthn: {
+    component: VerifierWechatIcon, // TODO: UPDATE THIS
+  },
   wechat: {
     component: VerifierWechatIcon,
   },
