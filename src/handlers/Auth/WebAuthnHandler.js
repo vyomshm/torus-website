@@ -17,15 +17,32 @@ export default class WebAuthnHandler extends AbstractLoginHandler {
 
   async getUserInfo(parameters) {
     log.debug(parameters)
-    const { idToken } = parameters
+    const { idToken, extraParams, extraParamsPassed } = parameters
     if (!idToken) {
       throw new Error('no idtoken/signature found for WebAuthn getUserInfo')
     }
-    const data = JSON.parse(await fetch(`https://webauthn.lookup.dev.tor.us/fetch/${idToken}`).then((a) => a.text()))
-    const { verifier_id: verifierId, signature, clientDataJSON, authenticatorData, publicKey, challenge, rpOrigin } = data
+    let verifierId
+    let signature
+    let clientDataJSON
+    let authenticatorData
+    let publicKey
+    let challenge
+    let rpOrigin
+
+    if (extraParamsPassed === 'true') {
+      log.debug('extraParamsPassed is true, using extraParams passed through hashParams')
+      ;({ verifier_id: verifierId, signature, clientDataJSON, authenticatorData, publicKey, challenge, rpOrigin } = JSON.parse(atob(extraParams)))
+    } else {
+      log.debug('extraParamsPassed is false, using extraParams passed through bridge server')
+      ;({ verifier_id: verifierId, signature, clientDataJSON, authenticatorData, publicKey, challenge, rpOrigin } = JSON.parse(
+        await fetch(`https://webauthn.lookup.dev.tor.us/fetch/${idToken}`).then((a) => a.text())
+      ))
+    }
+
     if (signature !== idToken) {
       throw new Error('idtoken should be equal to signature')
     }
+
     return {
       name: 'WebAuthn User',
       verifier: this.verifier,

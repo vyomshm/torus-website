@@ -38,9 +38,9 @@ class AbstractLoginHandler {
       return undefined
     })
     const {
-      hashParams: { access_token: accessToken, id_token: idToken },
+      hashParams: { access_token: accessToken, id_token: idToken, extraParams = {}, extraParamsPassed = false },
     } = result
-    return { accessToken, idToken: idToken || '' }
+    return { accessToken, idToken: idToken || '', extraParams, extraParamsPassed }
   }
 }
 
