@@ -369,7 +369,7 @@ export default {
       torusDescription: 'login.signUpEmail',
     },
     [WEBAUTHN_VERIFIER]: {
-      description: '',
+      description: 'dappLogin.continueWithBiometrics',
       typeOfLogin: WEBAUTHN,
       name: 'WebAuthn',
       clientId: 'webauthn',
@@ -381,7 +381,7 @@ export default {
       showOnMobile: true,
       // For torus only
       hasLightLogo: false,
-      torusDescription: '',
+      torusDescription: 'login.signUpBiometrics',
     },
     // [WEIBO_VERIFIER]: {
     //   description: '',

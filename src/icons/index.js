@@ -82,6 +82,7 @@ import VerifierRedditIcon from './VerifierRedditIcon.vue'
 import VerifierTwitchIcon from './VerifierTwitchIcon.vue'
 import VerifierTwitterIcon from './VerifierTwitterIcon.vue'
 import VerifierUnstoppableDomainsIcon from './VerifierUnstoppableDomainsIcon.vue'
+import VerifierWebAuthnIcon from './VerifierWebAuthnIcon.vue'
 import VerifierWechatIcon from './VerifierWechatIcon.vue'
 import VerifierWeiboIcon from './VerifierWeiboIcon.vue'
 import VisibilityOffIcon from './VisibilityOffIcon.vue'
@@ -257,7 +258,7 @@ export default {
     component: VerifierTwitterIcon,
   },
   webauthn: {
-    component: VerifierWechatIcon, // TODO: UPDATE THIS
+    component: VerifierWebAuthnIcon, // TODO: UPDATE THIS
   },
   wechat: {
     component: VerifierWechatIcon,
