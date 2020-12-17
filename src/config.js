@@ -346,6 +346,21 @@ export default {
       hasLightLogo: false,
       torusDescription: '',
     },
+    [WEBAUTHN_VERIFIER]: {
+      description: 'dappLogin.continueWithBiometrics',
+      typeOfLogin: WEBAUTHN,
+      name: 'WebAuthn',
+      clientId: 'webauthn',
+      logoHover: '',
+      logoLight: '',
+      logoDark: '',
+      showOnModal: true,
+      showOnDesktop: true,
+      showOnMobile: true,
+      // For torus only
+      hasLightLogo: false,
+      torusDescription: 'login.signUpBiometrics',
+    },
     [HOSTED_EMAIL_PASSWORDLESS_VERIFIER]: {
       description: 'dappLogin.continue',
       typeOfLogin: JWT,
@@ -367,21 +382,6 @@ export default {
       // For torus only
       hasLightLogo: true,
       torusDescription: 'login.signUpEmail',
-    },
-    [WEBAUTHN_VERIFIER]: {
-      description: 'dappLogin.continueWithBiometrics',
-      typeOfLogin: WEBAUTHN,
-      name: 'WebAuthn',
-      clientId: 'webauthn',
-      logoHover: '',
-      logoLight: '',
-      logoDark: '',
-      showOnModal: true,
-      showOnDesktop: true,
-      showOnMobile: true,
-      // For torus only
-      hasLightLogo: false,
-      torusDescription: 'login.signUpBiometrics',
     },
     // [WEIBO_VERIFIER]: {
     //   description: '',
