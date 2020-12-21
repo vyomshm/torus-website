@@ -45,6 +45,7 @@ export default class WebAuthnHandler extends AbstractLoginHandler {
 
     return {
       name: 'WebAuthn User',
+      profileImage: '',
       verifier: this.verifier,
       verifierId,
       typeOfLogin: this.typeOfLogin,

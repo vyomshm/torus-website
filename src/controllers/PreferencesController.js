@@ -409,7 +409,7 @@ class PreferencesController extends EventEmitter {
     this.updateStore(
       {
         theme,
-        tKeyOnboardingComplete: false,
+        tKeyOnboardingComplete: true,
         accountType: ACCOUNT_TYPE.NORMAL,
         defaultPublicAddress: address,
       },
