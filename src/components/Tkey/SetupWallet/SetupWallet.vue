@@ -10,13 +10,11 @@
     </div>
     <div class="mb-8">
       <div class="d-flex align-center mb-2">
-        <div class="caption text_2--text">{{ t('tkeyCreateSetup.authFactors') }} ({{ ~~(progressValue / 100) }}/3)</div>
+        <div class="caption text_2--text">{{ t('tkeyCreateSetup.authFactors') }} ({{ ~~(progressValue / 100) }}/4)</div>
         <div class="ml-auto caption" :class="`${progressColor}--text`">{{ t(progressText) }}</div>
       </div>
       <v-progress-linear v-model="progressRate" class="mb-2" :color="progressColor" rounded background-color="torusGray3"></v-progress-linear>
-      <div class="caption text_2--text">
-        {{ t(progressDescription) }}
-      </div>
+      <div class="caption text_2--text">{{ t(progressDescription) }}</div>
     </div>
     <div>
       <v-expansion-panels
@@ -61,6 +59,51 @@
               <v-icon v-if="!backupDeviceShare" size="16" class="mr-1 warning--text">$vuetify.icon.alert_circle_filled</v-icon>
               <div class="body-2 text_2--text">{{ t('tkeyCreateSetup.backupOnDevice') }}</div>
             </div>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+        <v-expansion-panel class="mb-4" disabled>
+          <v-expansion-panel-header class="py-2">
+            <v-icon class="mr-2 d-inline-flex mr-2 shrink text_2--text" size="24">$vuetify.icons.mail</v-icon>
+            <div class="grow text-capitalize font-weight-bold body-2" :class="$vuetify.theme.dark ? 'torusFont1--text' : 'text_2--text'">
+              {{ t('tkeyBackup.recoveryEmail') }}
+            </div>
+            <div class="ml-auto justify-end d-flex align-center">
+              <v-icon
+                small
+                :class="recoveryEmailFinal ? 'success--text' : 'text_3--text'"
+                class="ml-1"
+                v-text="'$vuetify.icons.check_circle_filled'"
+              />
+            </div>
+          </v-expansion-panel-header>
+          <v-expansion-panel-content class="pa-5">
+            <v-form v-model="validRecoveryEmailForm">
+              <div class="body-2 mb-4 text_2--text">
+                {{ t('tkeyBackup.recoveryEmailDesc1') }}
+                <span class="font-weight-bold">{{ t('tkeyBackup.recoveryEmailDesc2') }}</span>
+                {{ t('tkeyBackup.recoveryEmailDesc3') }}
+              </div>
+              <v-text-field
+                v-model="recoveryEmail"
+                :rules="[rules.email, rules.required]"
+                type="email"
+                outlined
+                :placeholder="t('tkeyBackup.enterEmail')"
+                :readonly="!!recoveryEmailFinal"
+              />
+              <div class="text-right">
+                <v-btn
+                  v-if="!recoveryEmailFinal"
+                  type="button"
+                  :disabled="!validRecoveryEmailForm"
+                  class="caption white--text font-weight-bold px-8"
+                  color="torusBrand1"
+                  @click="setRecoveryEmail"
+                >
+                  {{ t('tkeyNew.confirm') }}
+                </v-btn>
+              </div>
+            </v-form>
           </v-expansion-panel-content>
         </v-expansion-panel>
         <v-expansion-panel class="mb-4">
@@ -172,7 +215,7 @@
       <v-flex class="xs6 px-2">
         <v-btn
           block
-          :disabled="(!finalRecoveryPassword && !backupDeviceShare) || !userUnderstands"
+          :disabled="progressValue < 300 || !userUnderstands"
           :x-large="!$vuetify.breakpoint.xsOnly"
           color="torusBrand1"
           class="white--text body-2 font-weight-bold"
@@ -218,12 +261,18 @@ export default {
       showRecoveryPassword: false,
       recoveryPasswordConfirm: '',
       showRecoveryPasswordConfirm: false,
+      validRecoveryEmailForm: true,
+      recoveryEmail: '',
+      recoveryEmailFinal: '',
       rules: {
         required: (value) => !!value || this.t('tkeyNew.required'),
         minLength: (v) => passwordValidation(v) || this.t('tkeyCreateSetup.passwordRules'),
         equalToPassword: (value) => value === this.recoveryPassword || this.t('tkeyCreateSetup.passwordMatch'),
+        email: (value) =>
+          /^(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))$/.test(value) ||
+          this.t('walletSettings.invalidEmail'),
       },
-      panels: [1, 2],
+      panels: [1, 2, 3],
       progressValue: 200,
       backupDeviceShare: false,
       userUnderstands: false,
@@ -231,18 +280,17 @@ export default {
   },
   computed: {
     progressColor() {
-      return this.progressValue > 200 ? 'success' : 'warning'
+      return this.progressValue >= 300 ? 'success' : 'warning'
     },
     progressText() {
-      if (this.progressValue > 200 && (!this.backupDeviceShare || !this.finalRecoveryPassword)) return 'tkeyCreateSetup.good'
-      if (this.progressValue <= 200) return 'tkeyCreateSetup.average'
-      return 'tkeyCreateSetup.excellent'
+      if (this.progressValue >= 400) return 'tkeyCreateSetup.excellent'
+      if (this.progressValue < 300) return 'tkeyCreateSetup.good'
+      return 'tkeyCreateSetup.average'
     },
     progressDescription() {
-      if (this.progressValue >= 300) return 'tkeyCreateSetup.youHaveSufficient'
-      if (this.progressValue > 200 && this.backupDeviceShare) return 'tkeyCreateSetup.youNeedPassword'
-      if (this.progressValue > 200 && this.finalRecoveryPassword) return 'tkeyCreateSetup.youNeedBackup'
-      return 'tkeyCreateSetup.youNeedBackupPassword'
+      if (this.progressValue >= 400) return 'tkeyCreateSetup.youHaveSufficient'
+      if (this.progressValue < 300) return 'tkeyCreateSetup.youNeedOneMore'
+      return 'tkeyCreateSetup.youMayWantTo'
     },
     browser() {
       const browser = bowser.getParser(window.navigator.userAgent)
@@ -254,7 +302,7 @@ export default {
       return this.recoveryPasswordConfirm === this.recoveryPassword || this.t('tkeyCreateSetup.passwordMatch')
     },
     progressRate() {
-      return this.progressValue / 3
+      return this.progressValue / 4
     },
   },
   methods: {
@@ -263,11 +311,15 @@ export default {
     },
     async createWallet() {
       if (this.creatingTkey) return
-      this.$emit('createNewTKey', { password: this.finalRecoveryPassword, backup: this.backupDeviceShare })
+      this.$emit('createNewTKey', {
+        password: this.finalRecoveryPassword,
+        backup: this.backupDeviceShare,
+        recoveryEmail: this.recoveryEmailFinal,
+      })
     },
     setFinalPassword() {
       this.finalRecoveryPassword = this.recoveryPassword
-      this.progressValue += 60
+      this.progressValue += 100
     },
     async onBackupDeviceShare() {
       try {
@@ -277,6 +329,10 @@ export default {
       } catch (error) {
         log.error(error)
       }
+    },
+    setRecoveryEmail() {
+      this.recoveryEmailFinal = this.recoveryEmail
+      this.progressValue += 100
     },
   },
 }

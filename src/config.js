@@ -65,9 +65,10 @@ const {
   VUE_APP_HOSTED_EMAIL_PASSWORDLESS_CLIENT_ID,
   VUE_APP_WECHAT_CLIENT_ID,
   VUE_APP_KAKAO_CLIENT_ID,
+  VUE_APP_TKEY_ONLY,
 } = process.env
 
-log.info('baseurl', VUE_APP_BASE_ROUTE)
+log.info('baseurl', VUE_APP_BASE_ROUTE, 'is tkey', VUE_APP_TKEY_ONLY)
 
 const baseUrl = VUE_APP_BASE_ROUTE || 'https://localhost:3000'
 
@@ -81,10 +82,14 @@ const LOGIN_DOMAIN = VUE_APP_LOGIN_DOMAIN
 export default {
   baseUrl,
   baseRoute,
+  tkeyEmailHost: 'https://email.tkey.io/send_mail',
   commonApiHost: 'https://common-api.tor.us',
   metadataHost: 'https://metadata.tor.us',
   api: 'https://api.tor.us',
   // api: 'http://localhost:2020',
+
+  onlyTkey: VUE_APP_TKEY_ONLY === 'true',
+  // onlyTkey: true,
 
   simplexApiHost: 'https://simplex-api.tor.us',
   moonpayApiHost: 'https://moonpay-api.tor.us',

@@ -9,6 +9,7 @@ import { HandlerFactory as createHandler } from '../handlers/Auth'
 import PopupHandler from '../handlers/Popup/PopupHandler'
 import PopupWithBcHandler from '../handlers/Popup/PopupWithBcHandler'
 import vuetify from '../plugins/vuetify'
+import router from '../router'
 import torus from '../torus'
 import accountImporter from '../utils/accountImporter'
 import {
@@ -235,11 +236,12 @@ export default {
     }
   },
   showWalletPopup(context, payload) {
-    const finalUrl = `${baseRoute}wallet${payload.path || ''}?integrity=true&instanceId=${torus.instanceId}`
+    const url = payload.path.includes('tkey') ? `${baseRoute}${payload.path || ''}` : `${baseRoute}wallet${payload.path || ''}`
+    const finalUrl = `${url}?integrity=true&instanceId=${torus.instanceId}`
     const walletWindow = new PopupHandler({ url: finalUrl, features: FEATURES_DEFAULT_WALLET_WINDOW })
     walletWindow.open()
-    walletWindow.window.blur()
-    setTimeout(walletWindow.window.focus(), 0)
+    if (walletWindow.window.blur) walletWindow.window.blur()
+    if (walletWindow.window.focus) setTimeout(walletWindow.window.focus(), 0)
   },
   importAccount({ dispatch }, payload) {
     return new Promise((resolve, reject) => {
@@ -401,14 +403,23 @@ export default {
     const {
       userInfo: { verifierId, verifier, verifierParams },
     } = state
-    const oAuthKey = await dispatch('getTorusKey', { verifier, verifierId, verifierParams, oAuthToken, extraParams })
-    log.info('key 1', oAuthKey)
+
+    const defaultAddresses = []
+    let oAuthKey = {}
     dispatch('subscribeToControllers')
-    const defaultAddresses = await dispatch('initTorusKeyring', {
-      keys: [{ ...oAuthKey, accountType: ACCOUNT_TYPE.NORMAL }],
-      calledFromEmbed,
-      rehydrate: false,
-    })
+
+    if (!config.onlyTkey) {
+      oAuthKey = await dispatch('getTorusKey', { verifier, verifierId, verifierParams, oAuthToken, extraParams })
+      log.info('key 1', oAuthKey)
+
+      defaultAddresses.push(
+        ...(await dispatch('initTorusKeyring', {
+          keys: [{ ...oAuthKey, accountType: ACCOUNT_TYPE.NORMAL }],
+          calledFromEmbed,
+          rehydrate: false,
+        }))
+      )
+    }
 
     await dispatch('calculatePostboxKey', { oAuthToken })
     // Threshold Bak region
@@ -423,15 +434,25 @@ export default {
         if (defaultAddresses[0] && defaultAddresses[0] !== oAuthKey.ethAddress) {
           // Do tkey
           defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed })))
+        } else if (config.onlyTkey) {
+          defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed })))
         }
       } else {
         // In app.tor.us
         defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed })))
       }
+    } else if (config.onlyTkey && !keyExists) {
+      if (!isMain) dispatch('showWalletPopup', { path: 'tkey' })
+      else {
+        router.push({ path: 'tkey' })
+      }
+      throw new Error('User has no account')
     }
 
     const selectedDefaultAddress = defaultAddresses[0] || defaultAddresses[1]
-    const selectedAddress = Object.keys(state.wallet).includes(selectedDefaultAddress) ? selectedDefaultAddress : oAuthKey.ethAddress
+    const selectedAddress = Object.keys(state.wallet).includes(selectedDefaultAddress)
+      ? selectedDefaultAddress
+      : oAuthKey.ethAddress || Object.keys(state.wallet)[0]
     dispatch('updateSelectedAddress', { selectedAddress }) // synchronous
     prefsController.getBillboardContents()
     // continue enable function
