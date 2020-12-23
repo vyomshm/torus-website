@@ -15,11 +15,11 @@ const { torusController } = torus || {}
 const { thresholdKeyController } = torusController || {}
 
 export default {
-  async addTKey({ dispatch, state }, { calledFromEmbed }) {
+  async addTKey({ dispatch, state }, { calledFromEmbed, shareStores }) {
     try {
       const finalKey = state.postboxKey
       const normalAccountAddress = Object.keys(state.wallet).find((x) => state.wallet[x].accountType === ACCOUNT_TYPE.NORMAL)
-      const thresholdKey = await thresholdKeyController.login(finalKey.privateKey)
+      const thresholdKey = await thresholdKeyController.login(finalKey.privateKey, undefined, shareStores)
       log.info('tkey 2', thresholdKey)
       return dispatch('initTorusKeyring', {
         keys: [{ ...thresholdKey, accountType: ACCOUNT_TYPE.THRESHOLD }],
@@ -160,9 +160,9 @@ export default {
       aggregateIdTokenSeeds.sort()
       const aggregateIdToken = keccak256(aggregateIdTokenSeeds.join(String.fromCharCode(29))).slice(2)
       aggregateVerifierParams.verifier_id = aggregateVerifierId
-      const currentVeriferConfig = embedState.loginConfig[userInfo.verifier]
+      const currentVerifierConfig = embedState.loginConfig[userInfo.verifier]
       const postboxKey = await dispatch('getTorusKey', {
-        verifier: currentVeriferConfig.linkedVerifier,
+        verifier: currentVerifierConfig.linkedVerifier,
         verifierId: aggregateVerifierId,
         verifierParams: aggregateVerifierParams,
         oAuthToken: aggregateIdToken,

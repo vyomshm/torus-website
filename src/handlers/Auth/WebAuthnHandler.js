@@ -17,7 +17,7 @@ export default class WebAuthnHandler extends AbstractLoginHandler {
 
   async getUserInfo(parameters) {
     log.debug(parameters)
-    const { idToken, extraParams, extraParamsPassed } = parameters
+    const { idToken, ref, extraParams, extraParamsPassed } = parameters
     if (!idToken) {
       throw new Error('no idtoken/signature found for WebAuthn getUserInfo')
     }
@@ -44,11 +44,12 @@ export default class WebAuthnHandler extends AbstractLoginHandler {
     }
 
     return {
-      name: 'WebAuthn User',
+      name: 'WebAuthn Login',
       profileImage: '',
       verifier: this.verifier,
       verifierId,
       typeOfLogin: this.typeOfLogin,
+      ref,
       extraParams: {
         signature,
         clientDataJSON,

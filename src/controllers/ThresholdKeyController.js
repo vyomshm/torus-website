@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import TorusStorageLayer from '@tkey/storage-layer-torus'
 import { ethErrors } from 'eth-rpc-errors'
+import { BN } from 'ethereumjs-util'
 import log from 'loglevel'
 import ObservableStore from 'obs-store'
 import EventEmitter from 'safe-event-emitter'
@@ -52,7 +53,7 @@ class ThresholdKeyController extends EventEmitter {
     return this.store.getState()
   }
 
-  async login(postboxKey, tKeyJson) {
+  async login(postboxKey, tKeyJson, shareStores = []) {
     try {
       await this._init(postboxKey, tKeyJson)
       const { keyDetails, tKey, parsedShareDescriptions } = this.state
@@ -61,6 +62,10 @@ class ThresholdKeyController extends EventEmitter {
       let requiredShares = shareCount
       const descriptionBuffer = []
       let currentIndex = 0
+
+      for (const shareStore of shareStores) {
+        await tKey.inputShareStoreSafe(shareStore)
+      }
 
       window.addEventListener('beforeunload', beforeUnloadHandler)
       while (requiredShares > 0 && currentIndex < parsedShareDescriptions.length) {
@@ -236,7 +241,7 @@ class ThresholdKeyController extends EventEmitter {
     }
   }
 
-  async createNewTKey({ postboxKey, password, backup, recoveryEmail }) {
+  async createNewTKey({ postboxKey, password, backup, recoveryEmail, webAuthnShareHex }) {
     await this._init(postboxKey)
     const { tKey, settingsPageData = {} } = this.state
     if (password) await tKey.modules[SECURITY_QUESTIONS_MODULE_KEY].generateNewShareWithSecurityQuestions(password, PASSWORD_QUESTION)
@@ -266,6 +271,17 @@ class ThresholdKeyController extends EventEmitter {
           email: recoveryEmail,
           baseUrl: config.baseUrl,
         })
+      } catch (error) {
+        log.error(error)
+      }
+    }
+
+    if (webAuthnShareHex) {
+      try {
+        const shareCreated = await tKey.generateNewShare()
+        const webAuthnShare = new BN(webAuthnShareHex, 16)
+        log.debug('webAuthnShareHex', webAuthnShareHex)
+        await tKey.storageLayer.setMetadata({ input: shareCreated, privKey: webAuthnShare })
       } catch (error) {
         log.error(error)
       }

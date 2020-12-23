@@ -1,7 +1,8 @@
 import randomId from '@chaitanyapotti/random-id'
+// import jwtDecode from 'jwt-decode'
+import BN from 'bn.js'
 import clone from 'clone'
 import deepmerge from 'deepmerge'
-// import jwtDecode from 'jwt-decode'
 import log from 'loglevel'
 
 import config from '../config'
@@ -22,6 +23,7 @@ import {
   SUPPORTED_NETWORK_TYPES,
   USER_INFO_REQUEST_APPROVED,
   USER_INFO_REQUEST_REJECTED,
+  WEBAUTHN_VERIFIER,
 } from '../utils/enums'
 import { remove } from '../utils/httpHelpers'
 import { fakeStream, getIFrameOriginObject, isMain } from '../utils/utils'
@@ -336,7 +338,7 @@ export default {
       const loginParameters = await loginHandler.handleLoginWindow()
       const { accessToken, idToken } = loginParameters
       const userInfo = await loginHandler.getUserInfo(loginParameters)
-      const { profileImage, name, email, verifierId, typeOfLogin: returnTypeOfLogin, extraParams } = userInfo
+      const { profileImage, name, email, verifierId, typeOfLogin: returnTypeOfLogin, ref, extraParams } = userInfo
       commit('setUserInfo', {
         profileImage,
         name,
@@ -346,7 +348,7 @@ export default {
         verifierParams: { verifier_id: verifierId },
         typeOfLogin: returnTypeOfLogin,
       })
-      await dispatch('handleLogin', { calledFromEmbed, oAuthToken: idToken || accessToken, extraParams })
+      await dispatch('handleLogin', { calledFromEmbed, oAuthToken: idToken || accessToken, ref, extraParams })
     } catch (error) {
       log.error(error)
       oauthStream.write({ err: { message: error.message } })
@@ -398,10 +400,11 @@ export default {
       })
     )
   },
-  async handleLogin({ state, dispatch, commit }, { calledFromEmbed, oAuthToken, extraParams = {} }) {
+  async handleLogin({ state, dispatch, commit }, { calledFromEmbed, oAuthToken, ref, extraParams = {} }) {
     // The error in this is caught above
     const {
       userInfo: { verifierId, verifier, verifierParams },
+      embedState,
     } = state
 
     const defaultAddresses = []
@@ -420,8 +423,14 @@ export default {
         }))
       )
     }
+    const currentVerifierConfig = embedState.loginConfig[verifier]
+    if (!currentVerifierConfig.linkedVerifier) {
+      log.debug('linkedVerifier not found, using oAuthKey as postboxKey')
+      commit('setPostboxKey', { privateKey: oAuthKey.privKey, ethAddress: oAuthKey.ethAddress })
+    } else {
+      await dispatch('calculatePostboxKey', { oAuthToken })
+    }
 
-    await dispatch('calculatePostboxKey', { oAuthToken })
     // Threshold Bak region
     // Check if tkey exists
     const keyExists = await thresholdKeyController.checkIfTKeyExists(state.postboxKey.privateKey)
@@ -429,9 +438,36 @@ export default {
     // if not in iframe && keyExists, initialize tkey always
     // inside an iframe
     commit('setTkeyExists', keyExists)
-    if (keyExists) {
+    if (config.onlyTkey && !keyExists) {
+      if (!isMain) dispatch('showWalletPopup', { path: 'tkey' })
+      else {
+        router.push({ path: 'tkey' })
+      }
+      throw new Error('User has no account')
+    } else if (verifier === WEBAUTHN_VERIFIER && !keyExists) {
+      // create tkey
+      await dispatch('createNewTKey', { webAuthnShareHex: Buffer.from(ref, 'base64').toString() })
+      const { tKey } = state
+      if (!tKey) {
+        throw new Error('could not get tKey from state in tKey creation')
+      }
+      const shareStores = []
+      const webAuthnShareStore = tKey.storageLayer.getMetadata({ privKey: new BN(Buffer.from(ref, 'base64').toString(), 16) })
+      if (webAuthnShareStore) shareStores.push(webAuthnShareStore)
+      defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed, shareStores })))
+    } else if (keyExists) {
       if (!isMain) {
-        if (defaultAddresses[0] && defaultAddresses[0] !== oAuthKey.ethAddress) {
+        if (verifier === WEBAUTHN_VERIFIER) {
+          const { tKey } = state
+          const shareStores = []
+          if (!tKey) {
+            throw new Error('could not get tKey from state in login')
+          }
+          const webAuthnShareStore = tKey.storageLayer.getMetadata({ privKey: new BN(Buffer.from(ref, 'base64')) })
+          if (webAuthnShareStore) shareStores.push(webAuthnShareStore)
+          defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed, shareStores })))
+        } else if (defaultAddresses[0] && defaultAddresses[0] !== oAuthKey.ethAddress) {
+          // this is an optimisation to skip tKey reconstruction if your default is just the postboxKey
           // Do tkey
           defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed })))
         } else if (config.onlyTkey) {
@@ -441,12 +477,6 @@ export default {
         // In app.tor.us
         defaultAddresses.push(...(await dispatch('addTKey', { calledFromEmbed })))
       }
-    } else if (config.onlyTkey && !keyExists) {
-      if (!isMain) dispatch('showWalletPopup', { path: 'tkey' })
-      else {
-        router.push({ path: 'tkey' })
-      }
-      throw new Error('User has no account')
     }
 
     const selectedDefaultAddress = defaultAddresses[0] || defaultAddresses[1]

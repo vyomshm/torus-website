@@ -18,6 +18,7 @@ import {
   ERROR_TIME,
   SUCCESS_TIME,
   THEME_LIGHT_BLUE_NAME,
+  WEBAUTHN_VERIFIER,
 } from '../utils/enums'
 import { get, getEtherscanTransactions, getPastOrders, getWalletOrders, patch, post, remove } from '../utils/httpHelpers'
 import { notifyUser } from '../utils/notifications'
@@ -406,15 +407,16 @@ class PreferencesController extends EventEmitter {
       this.headers(address),
       { useAPIKey: true }
     )
-    this.updateStore(
-      {
-        theme,
-        tKeyOnboardingComplete: true,
-        accountType: ACCOUNT_TYPE.NORMAL,
-        defaultPublicAddress: address,
-      },
-      address
-    )
+    const storeAccount = {
+      theme,
+      tKeyOnboardingComplete: false,
+      accountType: ACCOUNT_TYPE.NORMAL,
+      defaultPublicAddress: address,
+    }
+    if (verifier === WEBAUTHN_VERIFIER) {
+      storeAccount.tKeyOnboardingComplete = true
+    }
+    this.updateStore(storeAccount, address)
   }
 
   /* istanbul ignore next */
