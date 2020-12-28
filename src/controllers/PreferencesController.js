@@ -413,7 +413,7 @@ class PreferencesController extends EventEmitter {
       accountType: ACCOUNT_TYPE.NORMAL,
       defaultPublicAddress: address,
     }
-    if (verifier === WEBAUTHN_VERIFIER) {
+    if (verifier && verifier === WEBAUTHN_VERIFIER) {
       storeAccount.tKeyOnboardingComplete = true
     }
     this.updateStore(storeAccount, address)
