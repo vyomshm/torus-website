@@ -161,15 +161,17 @@ export default {
       const aggregateIdToken = keccak256(aggregateIdTokenSeeds.join(String.fromCharCode(29))).slice(2)
       aggregateVerifierParams.verifier_id = aggregateVerifierId
       const currentVerifierConfig = embedState.loginConfig[userInfo.verifier]
-      if (currentVerifierConfig.linkedVerifier) {
-        const postboxKey = await dispatch('getTorusKey', {
-          verifier: currentVerifierConfig.linkedVerifier,
-          verifierId: aggregateVerifierId,
-          verifierParams: aggregateVerifierParams,
-          oAuthToken: aggregateIdToken,
-        })
-        commit('setPostboxKey', { privateKey: postboxKey.privKey, ethAddress: postboxKey.ethAddress })
+      let postboxVerifier = currentVerifierConfig.linkedVerifier
+      if (!postboxVerifier) {
+        postboxVerifier = currentVerifierConfig.verifier
       }
+      const postboxKey = await dispatch('getTorusKey', {
+        verifier: postboxVerifier,
+        verifierId: aggregateVerifierId,
+        verifierParams: aggregateVerifierParams,
+        oAuthToken: aggregateIdToken,
+      })
+      commit('setPostboxKey', { privateKey: postboxKey.privKey, ethAddress: postboxKey.ethAddress })
     } catch (error) {
       log.error(error, 'unable to get postbox key')
     }
