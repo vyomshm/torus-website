@@ -271,7 +271,11 @@ export default {
     if (payload.ethAddress) {
       context.commit('setWallet', {
         ...context.state.wallet,
-        [payload.ethAddress]: { privateKey: payload.privKey, accountType: payload.accountType || ACCOUNT_TYPE.NORMAL },
+        [payload.ethAddress]: {
+          privateKey: payload.privKey,
+          accountType: payload.accountType || ACCOUNT_TYPE.NORMAL,
+          seedPhrase: payload.seedPhrase,
+        },
       })
     }
   },
@@ -483,6 +487,12 @@ export default {
     const selectedAddress = Object.keys(state.wallet).includes(selectedDefaultAddress)
       ? selectedDefaultAddress
       : oAuthKey.ethAddress || Object.keys(state.wallet)[0]
+
+    if (!selectedAddress) {
+      dispatch('logOut')
+      router.push({ name: 'logout' }).catch((_) => {})
+      throw new Error('No Accounts available')
+    }
     dispatch('updateSelectedAddress', { selectedAddress }) // synchronous
     prefsController.getBillboardContents()
     // continue enable function
@@ -548,12 +558,13 @@ export default {
       dispatch('subscribeToControllers')
       await dispatch('initTorusKeyring', {
         keys: walletKeys.map((x) => {
-          const { privateKey, accountType } = wallet[x]
+          const { privateKey, accountType, seedPhrase } = wallet[x]
           return {
             ethAddress: x,
             privKey: privateKey,
             accountType,
             jwtToken: jwtToken[x],
+            seedPhrase,
           }
         }),
         calledFromEmbed: false,

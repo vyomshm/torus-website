@@ -73,7 +73,7 @@
           <v-expansion-panel readonly class="my-2">
             <v-expansion-panel-header id="display-panel-header">
               <v-icon small class="d-inline-flex mr-4 text_2--text shrink" v-text="'$vuetify.icons.person_circle'" />
-              <div class="grow font-weight-bold title text_1--text">{{ t('tkeySettings.defaultAccount') }}</div>
+              <div class="grow font-weight-bold title text_1--text">{{ t('tkeySettings.accountManagement') }}</div>
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <DefaultAccount :has-threshold="hasThreshold" :has-threshold-logged="hasThresholdLogged" />
@@ -116,13 +116,14 @@ export default {
   computed: {
     ...mapState(['wallet', 'selectedAddress', 'tKeyExists']),
     isThreshold() {
-      return this.wallet[this.selectedAddress]?.accountType === ACCOUNT_TYPE.THRESHOLD
+      const accountType = this.wallet[this.selectedAddress]?.accountType
+      return accountType === ACCOUNT_TYPE.THRESHOLD || accountType === ACCOUNT_TYPE.TKEY_SEED_PHRASE
     },
     hasThreshold() {
       return this.tKeyExists
     },
     hasThresholdLogged() {
-      return Object.values(this.wallet).some((x) => x.accountType === ACCOUNT_TYPE.THRESHOLD)
+      return Object.values(this.wallet).some((x) => x.accountType === ACCOUNT_TYPE.THRESHOLD || x.accountType === ACCOUNT_TYPE.TKEY_SEED_PHRASE)
     },
   },
   mounted() {

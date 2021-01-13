@@ -72,7 +72,7 @@ const initialState = {
     theme: {},
     logoDark: '',
     logoLight: '',
-    topupHide: false,
+    topupHide: config.hideTopup,
     featuredBillboardHide: false,
   },
   etherscanTx: [],
@@ -81,6 +81,7 @@ const initialState = {
   wcConnectorSession: {},
   confirmModals: [],
   postboxKey: {},
+  isTkeySeedPhraseInputRequired: false,
 }
 
 export default initialState
